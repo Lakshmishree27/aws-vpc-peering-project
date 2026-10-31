@@ -1,0 +1,39 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1f78b4'}}}%%
+flowchart LR
+    subgraph VPC_A["VPC A: ewb-vpc-a (10.10.0.0/16)"]
+        direction TB
+        style VPC_A fill:#f9f9f9,stroke:#333,stroke-width:2px
+        bastion["Bastion (ewb-bastion)\n10.10.1.10 (public)"
+            shape:ellipse]
+        appA["App A (ewb-app-a)\n10.10.2.10"
+            shape:ellipse]
+        publicSubnetA["Public Subnet ewb-a-public\n10.10.1.0/24"]
+        privateSubnetA["Private Subnet ewb-a-private\n10.10.2.0/24"]
+        igw["Internet GW (ewb-igw-a)"]
+        rtPublicA["RT A Public (ewb-rt-a-public)"]
+        rtPrivateA["RT A Private (ewb-rt-a-private)"]
+        publicSubnetA -->|assoc| rtPublicA -->|0.0.0.0/0| igw
+        privateSubnetA -->|assoc| rtPrivateA
+        bastion -->|in public subnet| publicSubnetA
+        appA -->|in private subnet| privateSubnetA
+    end
+
+    subgraph VPC_B["VPC B: ewb-vpc-b (10.20.0.0/16)"]
+        direction TB
+        style VPC_B fill:#fafafa,stroke:#333,stroke-width:2px
+        appB["App B (ewb-app-b)\n10.20.1.10"
+            shape:ellipse]
+        privateSubnetB["Private Subnet ewb-b-private\n10.20.1.0/24"]
+        rtPrivateB["RT B Private (ewb-rt-b-private)"]
+        privateSubnetB -->|assoc| rtPrivateB
+        appB -->|in private subnet| privateSubnetB
+    end
+
+    peer["VPC Peering (ewb-a-b-peer)"]
+    VPC_A -.->|peer| VPC_B
+    rtPublicA -.->|10.20.0.0/16| peer
+    rtPrivateA -.->|10.20.0.0/16| peer
+    rtPrivateB -.->|10.10.0.0/16| peer
+
+    bastion -->|SSH (ProxyJump)| appA
+    bastion -->|SSH (ProxyJump)| appB
